@@ -1,0 +1,16 @@
+gitlab:
+  base_url: "https://gitlab.example.com"
+  token: ""
+  group: "group"
+  with_shared: false
+
+http:
+  timeout_seconds: 30
+
+scan:
+  interval_seconds: 300
+  concurrency: 5
+
+metrics:
+  listen: ":9108"
+  path: "/metrics"
