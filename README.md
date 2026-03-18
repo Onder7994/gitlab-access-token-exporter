@@ -26,9 +26,9 @@ An exporter that iterates through all projects and subprojects in a specified gr
 
 The following labels are added:
 
-1. `group` - GitLab group path, for example `security/soc`.
+1. `group` - GitLab group path, for example `group/name`.
 2. `project_id` - Project ID.
-3. `project_path` - Full project path, for example `security/soc/<project_name>`.
+3. `project_path` - Full project path, for example `group/name/<project_name>`.
 4. `token_id` - Access token ID.
 5. `token_name` - Token name.
 
