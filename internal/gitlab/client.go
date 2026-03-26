@@ -45,6 +45,14 @@ func New(baseURL, token string, timeout time.Duration) *Client {
 	}
 }
 
+func (c *Client) WithToken(token string) *Client {
+	return &Client{
+		baseURL: c.baseURL,
+		token:   token,
+		http:    c.http,
+	}
+}
+
 func (c *Client) ListGroupProjects(ctx context.Context, group string, withShared bool) ([]Project, error) {
 	var out []Project
 	page := 1
@@ -107,6 +115,21 @@ func (c *Client) ListProjectAccessTokens(ctx context.Context, projectID int) ([]
 	}
 
 	return out, nil
+}
+
+func (c *Client) GetProject(ctx context.Context, idOrPath string) (Project, error) {
+	u := fmt.Sprintf(
+		"%s/api/v4/projects/%s",
+		c.baseURL,
+		url.PathEscape(idOrPath),
+	)
+
+	var p Project
+	if err := c.getJSON(ctx, u, &p); err != nil {
+		return Project{}, fmt.Errorf("get project %q: %w", idOrPath, err)
+	}
+
+	return p, nil
 }
 
 func (c *Client) getJSON(ctx context.Context, rawURL string, dst any) error {

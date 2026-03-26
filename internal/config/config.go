@@ -17,10 +17,16 @@ type Config struct {
 }
 
 type GitLabConfig struct {
-	BaseURL    string `yaml:"base_url"`
-	Token      string `yaml:"token"`
-	Group      string `yaml:"group"`
-	WithShared bool   `yaml:"with_shared"`
+	BaseURL    string          `yaml:"base_url"`
+	Token      string          `yaml:"token"`
+	Group      string          `yaml:"group"`
+	Projects   []ProjectConfig `yaml:"projects"`
+	WithShared bool            `yaml:"with_shared"`
+}
+
+type ProjectConfig struct {
+	Path  string `yaml:"path"`
+	Token string `yaml:"token"`
 }
 
 type HTTPConfig struct {
@@ -66,18 +72,21 @@ func Load(path string) (*Config, error) {
 
 	applyEnvOverrides(cfg)
 
+	return cfg, nil
+}
+
+func validate(cfg *Config) error {
 	if cfg.GitLab.BaseURL == "" {
-		return nil, fmt.Errorf("gitlab.base_url is required")
-	}
-	if cfg.GitLab.Group == "" {
-		return nil, fmt.Errorf("gitlab.group is required")
+		return fmt.Errorf("gitlab.base_url is required")
 	}
 	if cfg.GitLab.Token == "" {
-		return nil, fmt.Errorf("gitlab.token or GITLAB_TOKEN is required")
+		return fmt.Errorf("gitlab.token or GITLAB_TOKEN env is required")
 	}
-	if cfg.Scan.Concurrency <= 0 {
-		cfg.Scan.Concurrency = 5
+
+	if cfg.GitLab.Group == "" && len(cfg.GitLab.Projects) == 0 {
+		return fmt.Errorf("at least one if gitlab.group or gitlab.project must be set")
 	}
+
 	if cfg.HTTP.TimeoutSeconds <= 0 {
 		cfg.HTTP.TimeoutSeconds = 30
 	}
@@ -91,7 +100,7 @@ func Load(path string) (*Config, error) {
 		cfg.Metrics.Path = "/metrics"
 	}
 
-	return cfg, nil
+	return nil
 }
 
 func applyEnvOverrides(cfg *Config) {

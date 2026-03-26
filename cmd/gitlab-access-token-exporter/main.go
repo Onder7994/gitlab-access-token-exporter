@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
@@ -37,6 +38,8 @@ func main() {
 
 	s := scanner.New(
 		cfg.GitLab.Group,
+		cfg.GitLab.Projects,
+		cfg.GitLab.WithShared,
 		cfg.Scan.Concurrency,
 		gl,
 	)
@@ -48,6 +51,8 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle(cfg.Metrics.Path, promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	mux.HandleFunc("/healthz", handleLiveness)
+	mux.HandleFunc("/readyz", handleReadiness(exp))
 
 	srv := &http.Server{
 		Addr:    cfg.Metrics.Listen,
@@ -62,7 +67,31 @@ func main() {
 	}()
 
 	log.Printf("listening on %s%s", cfg.Metrics.Listen, cfg.Metrics.Path)
+	log.Printf("liveness: /healthz")
+	log.Printf("readiness: /readyz")
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("http server: %v", err)
+	}
+}
+
+func handleLiveness(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "alive"})
+}
+
+func handleReadiness(exp *exporter.Exporter) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if !exp.Ready() {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"status": "not ready",
+				"reason": "waiting for first successful scan",
+			})
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ready"})
 	}
 }

@@ -2,6 +2,11 @@ gitlab:
   base_url: "https://gitlab.example.com"
   token: ""
   group: "group"
+  projects:
+    - path: path/to/project
+      token: <token>
+    - path: path/to/project
+      token: <token>
   with_shared: false
 
 http:

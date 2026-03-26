@@ -3,6 +3,7 @@ package exporter
 import (
 	"context"
 	"log"
+	"sync/atomic"
 	"time"
 
 	"github.com/Onder7994/gitlab-access-token-exporter/internal/scanner"
@@ -21,6 +22,8 @@ type Exporter struct {
 	lastError    prometheus.Gauge
 	projectsSeen prometheus.Gauge
 	tokensSeen   prometheus.Gauge
+
+	ready atomic.Bool
 }
 
 func New(reg prometheus.Registerer) *Exporter {
@@ -85,6 +88,10 @@ func New(reg prometheus.Registerer) *Exporter {
 	return e
 }
 
+func (e *Exporter) Ready() bool {
+	return e.ready.Load()
+}
+
 func (e *Exporter) Run(ctx context.Context, interval time.Duration, s *scanner.Scanner) {
 	e.refresh(ctx, s)
 
@@ -115,6 +122,7 @@ func (e *Exporter) refresh(ctx context.Context, s *scanner.Scanner) {
 
 	e.lastError.Set(0)
 	e.lastSuccess.SetToCurrentTime()
+	e.ready.Store(true) // after first success scan ready will true
 
 	e.expiresAt.Reset()
 	e.expiresIn.Reset()

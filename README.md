@@ -2,6 +2,8 @@
 
 An exporter that iterates through all projects and subprojects in a specified group, discovers access tokens, and exposes metrics for them.
 
+You can also specify a list of specific projects in the configuration. The list of projects can be specified along with the `group` parameter.
+
 ### Supported metrics and labels
 
 `gitlab_project_access_token_expires_at_timestamp_seconds` - Unix timestamp of the token expiration date.
@@ -48,6 +50,16 @@ GitLab settings:
 2. `gitlab.token` or env `GITLAB_TOKEN` - Access token.
 3. `gitlab.group` or env `GITLAB_GROUP` - Group path to scan.
 4. `gitlab.with_shared` or env `GITLAB_WITH_SHARED` - Whether to include shared projects in the scan.
+5. `gitlab.projects`. Not exist env var.
+
+```yaml
+gitlab:
+  projects:
+    - path: path/to/project
+      token: <token>
+```
+
+`path` is required params if `projects` are exist. `token` is optional. If `token` in `projects` not set, usage global token from `gitlab.token`.
 
 HTTP settings:
 
